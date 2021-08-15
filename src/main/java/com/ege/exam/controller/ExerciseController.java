@@ -2,9 +2,13 @@ package com.ege.exam.controller;
 
 import com.ege.exam.model.Exercise;
 import com.ege.exam.repository.ExerciseRepository;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @RestController
 public class ExerciseController {
@@ -26,9 +30,14 @@ public class ExerciseController {
     }
 
     @GetMapping("/exercise/{id}")
-    Exercise findByIdExercise(@PathVariable Long id) {
-        return exerciseRepository.findById(id)
+    EntityModel<Exercise> findByIdExercise(@PathVariable Long id) {
+        Exercise exercise = exerciseRepository.findById(id)
                 .orElseThrow(() -> new ExerciseNotFoundException(id));
+
+        return EntityModel.of(exercise,
+                linkTo(methodOn(ExerciseController.class).findByIdExercise(id)).withSelfRel(),
+                linkTo(methodOn(ExerciseController.class).all()).withRel("exercises")
+        );
     }
 
     @PutMapping("/exercises/{id}")
