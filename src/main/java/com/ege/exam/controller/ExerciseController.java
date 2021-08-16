@@ -2,10 +2,12 @@ package com.ege.exam.controller;
 
 import com.ege.exam.model.Exercise;
 import com.ege.exam.repository.ExerciseRepository;
+import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
@@ -20,8 +22,17 @@ public class ExerciseController {
     }
 
     @GetMapping("/exercises")
-    List<Exercise> all() {
-        return exerciseRepository.findAll();
+    CollectionModel<EntityModel<Exercise>> all() {
+
+        List<EntityModel<Exercise>> exercises = exerciseRepository.findAll().stream()
+                .map(exercise -> EntityModel.of(exercise,
+                        linkTo(methodOn(ExerciseController.class).findByIdExercise(exercise.getId())).withSelfRel(),
+                        linkTo(methodOn(ExerciseController.class).all()).withRel("exercises")
+                        ))
+                .collect(Collectors.toList());
+
+        return CollectionModel.of(exercises,
+                linkTo(methodOn(ExerciseController.class).all()).withSelfRel());
     }
 
     @PostMapping("/exercises")
